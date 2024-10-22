@@ -1,76 +1,97 @@
 <?php
-$array_data_penjualan = [];
+session_start();
 
-if($_SERVER['REQUEST_METHOD'] == 'POST') {
-    array_push(
-        $array_data_penjualan,
-        array ("nama_produk" => $_POST['nama_produk'], 'harga_produk' => $_POST["harga_produk"],'jumlah_terjual' => $_POST['jumlah_terjual'],"total" => $_POST["harga_produk"] * $_POST['jumlah_terjual'])
-        );
+// Simulasi data produk
+if (!isset($_SESSION['produk'])) {
+    $_SESSION['produk'] = [];
 }
 
-function FormatRupiah($angka){
-    $rupiah = "Rp.".number_format($angka,"2",",",".");
-    return $rupiah;
+// Fungsi untuk menghitung total harga
+function hitungTotalHarga($harga, $jumlah) {
+    return $harga * $jumlah;
+}
+
+// Menghitung total penjualan keseluruhan dan total jumlah terjual
+$total_penjualan = 0;
+$total_jumlah_terjual = 0;
+
+// Tambah produk baru jika form disubmit
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $nama = $_POST['nama'];
+    $harga = (int)$_POST['harga'];
+    $jumlah = (int)$_POST['jumlah'];
+
+    $_SESSION['produk'][] = [
+        'nama' => $nama,
+        'harga' => $harga,
+        'jumlah' => $jumlah
+    ];
+}
+
+// Hitung total penjualan dan total jumlah terjual
+foreach ($_SESSION['produk'] as $p) {
+    $total_penjualan += hitungTotalHarga($p['harga'], $p['jumlah']);
+    $total_jumlah_terjual += $p['jumlah'];
 }
 ?>
-
 
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Sistem Pencatatan Data Penjualan</title>
-  <style>
+<style>
     table {
       border-collapse: collapse;
-      width: 70%;
+      width: 50%;
     }
 
     th, td {
       padding: 5px;
       border: 1px solid black;
     }
-  </style>
+
+    </style>
+    <title>Laporan Penjualan</title>
 </head>
 <body>
+    <h2>Laporan Penjualan</h2>
 
-<h1>Sistem Pencatatan Data Penjualan</h1>
+    <form method="post">
+        <label for="nama">Nama Produk:</label>
+        <input type="text" id="nama" name="nama" required>
+        <br>
+        <label for="harga">Harga:</label>
+        <input type="number" id="harga" name="harga" required>
+        <br>
+        <label for="jumlah">Jumlah:</label>
+        <input type="number" id="jumlah" name="jumlah" required>
+        <br>
+        <button type="submit">Simpan</button>
+    </form>
 
-<h2>[Form Input untuk Data Penjualan]</h2>
-
-<h2>Laporan Penjualan:</h2>
-
-<table>
-  <tr>
-    <th>Nama</th>
-    <th>Harga Per Produk</th>
-    <th>Jumlah Terjual</th>
-    <th>Total penjualan</th>
-  </tr>
-  <tr>
-    <td>Produk A</td>
-    <td><?= FormatRupiah(10000);?></td>
-    <td>5</td>
-    <td><?= FormatRupiah(50000);?></td>
-  </tr>
-  <tr>
-    <td>Produk B</td>
-    <td><?= FormatRupiah(7500);?></td>
-    <td>10</td>
-    <td><?= FormatRupiah(75000);?></td>
-  </tr>
-  <tr>
-    <td>Produk C</td>
-    <td><?= FormatRupiah(12000);?></td>
-    <td>8</td>
-    <td><?= FormatRupiah(96000);?></td>
-  </tr>
-  <tr>
-    <td>Total Penjualan</td>
-    <td></td>
-    <td>23</td>
-    <td><?= FormatRupiah(221000);?></td>
-  </tr>
-</table>
-
+    <table border="1" cellpadding="5" cellspacing="0" style="margin-top: 20px;">
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Harga Per Produk</th>
+                <th>Jumlah Terjual</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach ($_SESSION['produk'] as $p): ?>
+            <tr>
+                <td><?= htmlspecialchars($p['nama']) ?></td>
+                <td><?= number_format($p['harga'], 0, ',', '.') ?></td>
+                <td><?= $p['jumlah'] ?></td>
+                <td><?= number_format(hitungTotalHarga($p['harga'], $p['jumlah']), 0, ',', '.') ?></td>
+            </tr>
+            <?php endforeach; ?>
+            <tr>
+                <td colspan="2"><strong>Total Jumlah Terjual</strong></td>
+                <td><strong><?= $total_jumlah_terjual ?></strong></td>
+                <td><strong><?= number_format($total_penjualan, 0, ',', '.') ?></strong></td>
+            </tr>
+        </tbody>
+    </table>
 </body>
 </html>
